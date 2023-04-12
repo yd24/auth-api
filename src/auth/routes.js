@@ -11,25 +11,25 @@ const acl = require('./middleware/acl');
 const router = express.Router();
 
 router.post('/signup', logger, handleSignUp);
-router.post('/signin', logger, basicAuth, handleSignIn);
+router.post('/signin', logger, handleSignIn);
 
-router.get('/secret', logger, bearerAuth, handleSecret);
-router.get('/users', logger, bearerAuth, acl, handleUsers);
+router.get('/secret', logger, handleSecret);
+router.get('/users', logger, handleUsers);
 
-function handleSignUp() {
-  console.log('Signed up');
+function handleSignUp(req, res, next) {
+  res.send('Signed up');
 }
 
-function handleSignIn() {
-  console.log('Signed in');
+function handleSignIn(req, res, next) {
+  res.send('Signed in');
 }
 
-function handleSecret() {
-  console.log('Secret hit');
+function handleSecret(req, res, next) {
+  res.send('Secret hit');
 }
 
-function handleUsers() {
-  console.log('Users hit');
+function handleUsers(req, res, next) {
+  res.send('Users hit');
 }
 
 module.exports = router;
