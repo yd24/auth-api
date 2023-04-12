@@ -5,23 +5,32 @@ const express = require('express');
 const { users } = require('./models/index');
 const basicAuth = require('./middleware/basic');
 const bearerAuth = require('./middleware/bearer');
-const logger = require('./middleware/logger');
 const acl = require('./middleware/acl');
 
 const router = express.Router();
 
-router.post('/signup', logger, handleSignUp);
-router.post('/signin', logger, handleSignIn);
+router.post('/signup', handleSignUp);
+router.post('/signin', basicAuth, handleSignIn);
 
-router.get('/secret', logger, handleSecret);
-router.get('/users', logger, handleUsers);
+router.get('/secret', bearerAuth, handleSecret);
+router.get('/users', bearerAuth, handleUsers);
 
-function handleSignUp(req, res, next) {
-  res.send('Signed up');
+async function handleSignUp(req, res, next) {
+  const userObj = req.body;
+  try {
+    const createdUser = await users.create(userObj);
+    res.status(201).json(createdUser);
+  } catch (e) {
+    console.error('Could not create User', e);
+  }
 }
 
 function handleSignIn(req, res, next) {
-  res.send('Signed in');
+  try {
+    res.status(200).json(req.user);
+  } catch (e) {
+    console.error('Invalid user', e);
+  }
 }
 
 function handleSecret(req, res, next) {

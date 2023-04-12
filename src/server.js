@@ -12,7 +12,8 @@ const error500 = require('./error-handlers/500');
 //routers
 const v1 = require('./routes/v1');
 const v2 = require('./routes/v2');
-const router = require('./auth/routes');
+const logger = require('./auth/middleware/logger');
+const account = require('./auth/routes');
 
 const app = express();
 
@@ -22,9 +23,9 @@ app.use(cors());
 app.use(express.json());
 
 //routes
+app.use('/', logger, account);
 app.use('/api/v1', v1);
 //app.use('/api/v2', v2);
-app.use('/', router);
 
 app.use('*', error404);
 app.use(error500);
