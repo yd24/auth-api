@@ -1,13 +1,9 @@
 'use strict';
-require('dotenv').config();
 const server = require('../src/server');
-const bcrypt = require('bcrypt');
-const base64 = require('base-64');
-const jwt = require('jsonwebtoken');
 const { users } = require('../src/auth/models');
+const base64 = require('base-64');
 const supertest = require('supertest');
 const request = supertest(server.app);
-const SECRET = process.env.SECRET || 'Secret';
 
 beforeAll( async() => {
   await users.model.sync();
@@ -17,7 +13,7 @@ afterAll( async() => {
   await users.model.drop();
 });
 
-describe('', () => {
+describe('Testing auth', () => {
   let testUser = {};
   let token = '';
 
@@ -29,13 +25,14 @@ describe('', () => {
 
     const res = await request.post('/signup').send(testUser);
     expect(res.body.username).toEqual('Kirk');
+    expect(res.body.token).toBeTruthy();
   });
 
   test('Able to sign in successfully and receive a token', async() => {
     const encoded = base64.encode(`${testUser.username}:${testUser.password}`);
     const res = await request.post('/signin').set('Authorization', `Basic ${encoded}`);
     expect(res.body.username).toEqual('Kirk');
-    
+
     token = res.body.token;
     expect(token).toBeTruthy();
   });
