@@ -121,8 +121,119 @@ describe('Testing unauthenticated server routes', () => {
 });
 
 //v2 tests
-xdescribe('Testing authenticated server routes', () => {
-  xtest('', () => {
+describe('Testing authenticated server routes', () => {
+  let token, testUser, testClothes, testFood, testWriter, 
+    testAdmin, user_res, writer_res, admin_res, clothes_res, food_res, bad_res;
 
+  test('Can POST to create an item', async() => {
+    //test items
+    testUser = {
+      username: 'Lassy',
+      password: 'Kirk@5',
+    };
+
+    testWriter = {
+      username: 'Writer',
+      password: 'Kirk@5',
+      role: 'writer',
+    };
+
+    testAdmin = {
+      username: 'Admin',
+      password: 'Kirk@5',
+      role: 'admin',
+    };
+
+    testClothes = {
+      name: 'hat',
+      color: 'red',
+      size: 'M',
+    };
+
+    admin_res = await request.post('/signup').send(testAdmin);
+    token = admin_res.body.token;
+    console.log('token', token);
+
+    //POST requests
+    user_res = await request.post('/api/v2/users')
+      .set('Authorization', `Bearer ${token}`)
+      .send(testUser);
+    writer_res = await request.post('/api/v2/users')
+      .set('Authorization', `Bearer ${token}`)
+      .send(testWriter);
+    bad_res = await request.post('/api/v2/users')
+      .set('Authorization', `Bearer badtoken`)
+      .send(testWriter);
+
+    expect(user_res.body.username).toEqual('Lassy');
+    expect(writer_res.body.username).toEqual('Writer');
+    expect(bad_res.status).toEqual(500);
+  });
+
+  test('Can GET all items', async() => {
+    testFood = {
+      name: 'pork',
+      calories: 500,
+      type: 'protein',
+    };
+    food_res = await request.post('/api/v2/food')
+      .set('Authorization', `Bearer ${token}`)
+      .send(testFood);
+
+    //GET requests
+    const user_res2 = await request.get('/api/v2/users')
+      .set('Authorization', `Bearer ${token}`);
+    const food_res2 = await request.get('/api/v2/food')
+      .set('Authorization', `Bearer ${token}`);
+    const clothes_res2 = await request.get('/api/v2/clothes')
+      .set('Authorization', `Bearer badtoken`);
+
+    expect(user_res2.body.length).toEqual(4);
+    expect(food_res2.body.length).toEqual(2);
+    expect(clothes_res2.body.length).toBeFalsy();
+  });
+
+  test('Can GET item by ID', async() => {
+    //GET requests
+    const food_id = food_res.body.id;
+    const res2 = await request.get(`/api/v2/food/${food_id}`)
+      .set('Authorization', `Bearer ${token}`);
+    const res3 = await request.get(`/api/v2/food/${food_id}`)
+      .set('Authorization', `Bearer badtoken`);
+    console.log(res2);
+
+    expect(res2.body.name).toEqual('pork');
+    expect(res3.status).toEqual(500);
+  });
+
+  test('Can update item by ID', async() => {
+    //GET requests
+    const food_id = food_res.body.id;
+    food_res.body.name = 'fish';
+    const res2 = await request.put(`/api/v2/food/${food_id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send(food_res.body);
+
+    food_res.body.name = 'turkey';
+    const res3 = await request.put(`/api/v2/food/${food_id}`)
+      .set('Authorization', `Bearer ${writer_res.body.token}`)
+      .send(food_res.body);
+
+    expect(res2.body.name).toEqual('fish');
+    expect(res3.status).toEqual(500);
+  });
+
+  test('Can delete item by ID', async() => {
+    //GET requests
+    const food_id = food_res.body.id;
+    const res2 = await request.delete(`/api/v2/food/${food_id}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    const user_id = admin_res.body.id;
+    const res3 = await request.delete(`/api/v2/users/${user_id}`)
+      .set('Authorization', `Bearer ${writer_res.body.token}`);
+
+    expect(res2.body).toEqual(1);
+    expect(res3.status).toEqual(500);
   });
 });
